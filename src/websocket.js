@@ -7,10 +7,13 @@ const pendingRpcs = {};
 let socket, monConn;
 
 const socketError = (retry = false) => {
-  if(monConn) clearInterval(monConn);
-  for (const [, val] of Object.entries(pendingRpcs))
-    val.reject('rpc failed because of socket error');
   const wstate = (socket ? wsToStr(socket.readyState) : 'not open');
+  console.log('socketError', {retry, wstate});
+  if(monConn) clearInterval(monConn);
+  for (const [, val] of Object.entries(pendingRpcs)) {
+    console.log('rejecting rpc:', val.msg);
+    val.reject('rpc failed because of socket error');
+  }
   // if(socket.readyState < WebSocket.CLOSING) socket.close();
   if(!retry) { 
     util.popup(`
@@ -59,10 +62,13 @@ const tryToConnect = async () => {
     }
     const pend = pendingRpcs[id];
     delete pendingRpcs[id];
-    switch(type) {
-      case "res": pend.resolve(msgObj.val);                         break;
-      case "rej": throw (msgObj.err);
-      case "err": console.error("rpc returned error:", {msgObj});   break;
+    if(!pend) console.log("rpc id not in pending table:", {message});
+    else switch(type) {
+      case "res": pend.resolve(msgObj.val); break;
+      case "rej": 
+        console.error("rpc rejected:",  msgObj);
+        pend.reject (msgObj.err); break;
+      case "err": console.error("rpc error:", {msgObj}); break;
       default: console.error("rpc response type invalid:", {msgObj});
     }
   };
@@ -81,10 +87,8 @@ const rpc = async (mod, func, args) => {
   if(!socket || socket.readyState != WebSocket.OPEN) 
     throw `${mod}:${func} rpc call with no open socket.`;
   return new Promise( (resolve, reject) => {
-    pendingRpcs[id] = {resolve, reject};
-    try{  
-      socket.send(JSON.stringify(msg));
-    }
+    pendingRpcs[id] = {resolve, reject, msg};
+    try{ socket.send(JSON.stringify(msg)); }
     catch(err) {
       delete pendingRpcs[id];
       reject(`socket.send error: ${err}`);

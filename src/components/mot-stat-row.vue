@@ -2,15 +2,17 @@
 <template>
   <div class=row>
       <div class="descr">{{ descr }}:</div>
-      <div class="error" v-show="status.errMsg">Error: {{status.errMsg}}</div>
-      <template v-if="!status.errMsg">
+      <div class="error" v-show="showError">{{errMsg}}</div>
+      <template v-if="!showError">
         <div class="errFlag" :class="{error:status.errFlag}">error</div>
         <div class="busy" :class="{true:status.busy}"    >busy</div>
         <div class="motorOn" :class="{true:status.motorOn}" >motorOn</div>
         <div class="homed" :class="{true:status.homed}"   >homed</div>
         <div class="pos" :class="{true:status.homed}">pos: {{status.pos}}</div>
       </template>
-      <input class="tgtPos" v-model.number="tgtPos" placeholder="Target Position">
+      <input class="tgtPos" v-model.number="tgtPos" placeholder="Enter">
+      <input class="speed" v-model.number="speed" placeholder="Default">
+      <input class="accel" v-model.number="accel" placeholder="Default">
       <button class="home"  @click="home">Home</button>
       <button class="move"  @click="move">Move</button>
       <button class="jogp"  @click="jogp">Jog+</button>
@@ -25,6 +27,7 @@
   import util     from '../my-utils.js';
 
   let isDestroyed = false;
+  const accelTable = [0, 8000, 16000, 24000, 32000, 40000, 50000, 60000];
 
   export default {
     name: 'MotorStatusRow',
@@ -35,8 +38,11 @@
     },
     data: function () {
       return {
-        content: 'test',
+        showError: false,
+        errMsg: '',
         tgtPos: 1000,
+        speed:  2000,
+        accel:     4,
         status: {
           name:'', errFlag:false, busy:false, motorOn:false, homed:false, pos:0,
         },
@@ -45,7 +51,10 @@
     created: async function() {  
       while(!isDestroyed) {
         try { this.status = await motRpc('getStatus', this.motIdx); }
-        catch(err) {}; //  console.debug(err); }
+        catch(err) {
+          this.errMsg = err.message;
+          this.showError = true;
+        };
         await util.sleep(200);
       }
     },
@@ -59,8 +68,18 @@
         else
           motRpc('fakeHome', this.motIdx).then(()=>{});
       },
+      getAccel: function() {
+        let accel;
+        if(this.accel < 8) accel = this.accel;
+        else {
+          accel = 7;
+          accelTable.some( (a, idx) => {
+            if(this.accel < a) { accel = idx-1; return true; }});
+        }
+        return accel;
+      },
       move: function() {
-        motRpc('move', this.motIdx, this.tgtPos).then(()=>{});
+        motRpc('move', this.motIdx, this.tgtPos, this.speed, this.getAccel()).then(()=>{});
       },
       jogp: function() {
         motRpc('jog', this.motIdx, 1, this.tgtPos).then(()=>{});
@@ -72,6 +91,7 @@
         motRpc('stop', this.motIdx).then(()=>{});
       },
       reset: function() {
+        this.showError = false;
         motRpc('reset', this.motIdx).then(()=>{});
       },
     }
@@ -82,62 +102,74 @@
   .row {
     font-size: 13px;
     display: grid;
-    grid-template-columns: [descr]   .5fr  [errFlag]  .2fr  [busy] .2fr 
-                           [motorOn] .2fr  [homed]    .35fr [pos]  .4fr
-                           [tgtPos]  .3fr  [home]     .3fr  [move] .25fr
-                           [jogp]    .25fr [jogm]    .25fr  [stop] .25fr 
-                           [reset]  .35fr ;
+      grid-template-columns: [descr]   .5fr  [errFlag]  .2fr  [busy] .2fr 
+                             [motorOn] .2fr  [homed]    .35fr [pos]  .4fr
+                             [tgtPos]  .25fr [speed]    .25fr [accel]  .25fr  
+                             [home]    .3fr  [move]     .25fr
+                             [jogp]    .25fr [jogm]     .25fr  [stop] .25fr 
+                             [reset]  .35fr ;
     grid-column-gap: 5px;
-  }
-  .descr {
-    color: black;
-    text-align: right;
-    grid-column: descr / span 1;
-  }
-  .errFlag { grid-column: errFlag / span 1; }
-  .busy    { grid-column: busy    / span 1; }
-  .motorOn { grid-column: motorOn / span 1; }
-  .homed   { grid-column: homed   / span 1; }
-  .pos {
-    color: black;
-    text-align: left;
-    grid-column: pos / span 1;
-  }
-  .true { color:green;}
-  .error{ color:red;   }
-  .tgtPos { 
-    width:60px;
-    grid-column: tgtPos / span 1;
-    justify-self: left;
-  }
-  .home {
-    font-size: 11px;
-    width: 50px;
-    grid-column: home / span 1;
-  }
-  .move {
-    font-size: 11px;
-    width: 40px;
-    grid-column: move / span 1;
-  }
-  .jogp {
-    font-size: 11px;
-    width: 40px;
-    grid-column: jogp / span 1;
-  }
-  .jogm {
-    font-size: 11px;
-    width: 40px;
-    grid-column: jogm / span 1;
-  }
-  .stop {
-    font-size: 11px;
-    width: 40px;
-    grid-column: stop / span 1;
-  }
-  .reset {
-    font-size: 11px;
-    width: 40px;
-    grid-column: reset / span 1;
+    .descr {
+      color: black;
+      text-align: right;
+      grid-column: descr ;
+    }
+    .error   { grid-column: errFlag/tgtPos ; }
+    .errFlag { grid-column: errFlag ; }
+    .busy    { grid-column: busy; }
+    .motorOn { grid-column: motorOn ; }
+    .homed   { grid-column: homed   ; }
+    .pos {
+      color: black;
+      text-align: left;
+      grid-column: pos ;
+    }
+    .true { color:green;}
+    .error{ color:red;   }
+    .tgtPos { 
+      width:45px;
+      grid-column: tgtPos ;
+      justify-self: left;
+    }
+    .speed { 
+      width:45px;
+      grid-column: speed ;
+      justify-self: left;
+    }
+    .accel { 
+      width:45px;
+      grid-column: accel ;
+      justify-self: left;
+    }
+    .home {
+      font-size: 11px;
+      width: 50px;
+      grid-column: home ;
+    }
+    .move {
+      font-size: 11px;
+      width: 40px;
+      grid-column: move ;
+    }
+    .jogp {
+      font-size: 11px;
+      width: 40px;
+      grid-column: jogp ;
+    }
+    .jogm {
+      font-size: 11px;
+      width: 40px;
+      grid-column: jogm ;
+    }
+    .stop {
+      font-size: 11px;
+      width: 40px;
+      grid-column: stop ;
+    }
+    .reset {
+      font-size: 11px;
+      width: 45px;
+      grid-column: reset ;
+    }
   }
 </style>

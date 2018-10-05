@@ -3,7 +3,9 @@
   <div id="mstatus">
     <div id=table v-if="motors">
       <header id=hdr>
-        <div id="pos">Target Position</div>
+        <div id="pos">target</div>
+        <div id="speed">speed</div>
+        <div id="accel">accel</div>
       </header>
       <template v-for="mot in motors">
          <MotorStatusRow :key="mot.idx" :motIdx="mot.idx" :descr="mot.descr" :hasLimit="mot.hasLimit"/>
@@ -44,15 +46,26 @@ export default {
     
     #hdr {
       display: grid;
-    grid-template-columns: [descr]   .5fr  [errFlag]  .2fr  [busy] .2fr 
-                           [motorOn] .2fr  [homed]    .35fr [pos]  .4fr
-                           [tgtPos]  .3fr  [home]     .3fr  [move] .25fr
-                           [jogp]    .25fr [jogm]    .25fr  [stop] .25fr 
-                           [reset]  .35fr ;
+      grid-template-columns: [descr]   .5fr  [errFlag]  .2fr  [busy] .2fr 
+                             [motorOn] .2fr  [homed]    .35fr [pos]  .4fr
+                             [tgtPos]  .25fr [speed]    .25fr [accel]  .25fr  
+                             [home]    .3fr  [move]     .25fr
+                             [jogp]    .25fr [jogm]     .25fr  [stop] .25fr 
+                             [reset]  .35fr ;
       #pos {
-        width:60px;
-        grid-column: tgtPos / span 1;
-        justify-self: left;
+        grid-column: tgtPos;
+        // justify-self: left;
+        font-size: 14px;
+      }
+      #speed {
+        grid-column: speed;
+        // justify-self: left;
+        font-size: 14px;
+      }
+      #accel {
+        grid-column: accel;
+        // justify-self: left;
+        font-size: 14px;
       }
     }
   }
