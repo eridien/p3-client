@@ -6,17 +6,9 @@
       <router-link to="/about">About</router-link>
     </div>
     <router-view/>
-    <!-- <dialogs-wrapper></dialogs-wrapper> -->
+    <dialogs-wrapper></dialogs-wrapper>
   </div>
 </template>
-
-// <script>
-// // import Vue      from 'vue';
-// // import Popup    from './components/popup.vue';
-// // import {create} from 'vue-modal-dialogs';
-// // Vue.prototype.popup = create(Popup, 'content');
-// </script>
-
 
 <style lang="scss">
 #app {
