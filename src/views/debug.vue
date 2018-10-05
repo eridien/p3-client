@@ -1,7 +1,7 @@
 
 <template>
   <div id="mstatus">
-    <div id=table>
+    <div id=table v-if="motors">
       <header id=hdr>
         <div id="pos">Target Position</div>
       </header>
@@ -9,6 +9,7 @@
          <MotorStatusRow :key="mot.idx" :motIdx="mot.idx" :descr="mot.descr" :hasLimit="mot.hasLimit"/>
       </template>
     </div>
+    <div v-else> Loading ...</div>
   </div>
 </template>
 
@@ -23,8 +24,11 @@ export default {
     MotorStatusRow,
   },
   data: function(){ return {
-    motors: getMotors(),
+    motors: null,
   }},
+  created: function() {
+    getMotors().then( (mots) => {this.motors=mots} );
+  }
 }
 </script>
 

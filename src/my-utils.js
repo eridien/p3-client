@@ -7,6 +7,7 @@ import {create as createPopup} from 'vue-modal-dialogs';
 import MessageBox              from './components/popup.vue';
 
 export default {
-  popup: (msg) => createPopup(MessageBox, 'content')(msg),
-  sleep: (ms)  => new Promise(res => setTimeout(res, ms)),
+  popup(msg) {createPopup(MessageBox, 'content')(msg)},
+  
+  sleep(ms)  {return new Promise((res) => setTimeout(res, ms))},
 }

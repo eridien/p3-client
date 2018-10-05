@@ -19,9 +19,8 @@
 </template>
 
 <script>
-  import {motRpc}     from '../websocket.js';
-  import {getMotors}  from '../motor.js';
-  import {sleep}      from '../main.js';
+  import {motRpc} from '../websocket.js';
+  import util     from '../my-utils.js';
 
   let isDestroyed = false;
 
@@ -45,8 +44,7 @@
       while(!isDestroyed) {
         try {
           this.status = await motRpc('getStatus', this.motIdx);
-          // this.status.errMsg = 'test';
-          await sleep(200);
+          await util.sleep(200);
         }
         catch(err) { console.debug(err); }
       }
