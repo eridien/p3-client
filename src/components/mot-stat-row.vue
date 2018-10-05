@@ -12,9 +12,11 @@
       </template>
       <input class="tgtPos" v-model.number="tgtPos" placeholder="Target Position">
       <button class="home"  @click="home">Home</button>
-      <button class="move"   @click="move">Move</button>
-      <button class="stop"   @click="stop">Stop</button>
-      <button class="reset"  @click="reset">Reset</button>
+      <button class="move"  @click="move">Move</button>
+      <button class="jogp"  @click="jogp">Jog+</button>
+      <button class="jogm"  @click="jogm">Jog-</button>
+      <button class="stop"  @click="stop">Stop</button>
+      <button class="reset" @click="reset">Reset</button>
   </div>
 </template>
 
@@ -42,11 +44,9 @@
     },
     created: async function() {  
       while(!isDestroyed) {
-        try {
-          this.status = await motRpc('getStatus', this.motIdx);
-          await util.sleep(200);
-        }
-        catch(err) { console.debug(err); }
+        try { this.status = await motRpc('getStatus', this.motIdx); }
+        catch(err) {}; //  console.debug(err); }
+        await util.sleep(200);
       }
     },
     destroyed: () => {
@@ -61,6 +61,12 @@
       },
       move: function() {
         motRpc('move', this.motIdx, this.tgtPos).then(()=>{});
+      },
+      jogp: function() {
+        motRpc('jog', this.motIdx, 1, this.tgtPos).then(()=>{});
+      },
+      jogm: function() {
+        motRpc('jog', this.motIdx, 0, this.tgtPos).then(()=>{});
       },
       stop: function() {
         motRpc('stop', this.motIdx).then(()=>{});
@@ -79,7 +85,8 @@
     grid-template-columns: [descr]   .5fr  [errFlag]  .2fr  [busy] .2fr 
                            [motorOn] .2fr  [homed]    .35fr [pos]  .4fr
                            [tgtPos]  .3fr  [home]     .3fr  [move] .25fr
-                           [stop]    .25fr [reset]    .35fr ;
+                           [jogp]    .25fr [jogm]    .25fr  [stop] .25fr 
+                           [reset]  .35fr ;
     grid-column-gap: 5px;
   }
   .descr {
@@ -112,6 +119,16 @@
     font-size: 11px;
     width: 40px;
     grid-column: move / span 1;
+  }
+  .jogp {
+    font-size: 11px;
+    width: 40px;
+    grid-column: jogp / span 1;
+  }
+  .jogm {
+    font-size: 11px;
+    width: 40px;
+    grid-column: jogm / span 1;
   }
   .stop {
     font-size: 11px;

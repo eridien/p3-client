@@ -3,31 +3,45 @@ import util from './my-utils.js';
 
 const wsToStr = (code) => ['connecting','open','closing','closed'][code];
 
-const pending = {};
-let socket;
+const pendingRpcs = {};
+let socket, monConn;
 
 const socketError = (retry = false) => {
-  for(let {key, val} in pending) val.reject('rpc failed because of socket error');
+  if(monConn) clearInterval(monConn);
+  for (const [, val] of Object.entries(pendingRpcs))
+    val.reject('rpc failed because of socket error');
   const wstate = (socket ? wsToStr(socket.readyState) : 'not open');
-  if(socket) socket.close();
-  if(!retry) util.popup(`
-    Timeout while waiting for the server connection (the websocket is ${wstate}). 
-    I will keep retrying.  
-    The indicator in the top right of the page shows connection status.
-  `);
+  // if(socket.readyState < WebSocket.CLOSING) socket.close();
+  if(!retry) { 
+    util.popup(`
+      Timeout while waiting for the server connection (the websocket is ${wstate}). 
+      I will keep retrying.  
+      The indicator in the top right of the page shows connection status.
+    `);
+    console.debug('connection down');
+  }
   setTimeout(chkConn, 2000, true);
   tryToConnect();
+}
+
+const chkConn = async (retry = false) => {
+  if(socket.readyState !== WebSocket.OPEN) socketError(retry);
 }
 
 const tryToConnect = async () => {
   socket = new WebSocket('ws://192.168.1.179:3535');
 
   socket.onopen = () => {
+    util.closePopup();
+    console.debug('connection up');
+    if(monConn) clearInterval(monConn);
+    monConn = setInterval(chkConn, 2000);
+
     socket.onerror = (err) => {
       console.error('websocket error:', err);
       socketError();
-    }
-  },
+    }  
+  }
   socket.onmessage = (event) => {
     const message = event.data;
     // console.debug("WebSocket message received:", message);
@@ -43,8 +57,8 @@ const tryToConnect = async () => {
       console.error("rpc response id missing:", {message});
       return;
     }
-    const pend = pending[id];
-    delete pending[id];
+    const pend = pendingRpcs[id];
+    delete pendingRpcs[id];
     switch(type) {
       case "res": pend.resolve(msgObj.val);                         break;
       case "rej": throw (msgObj.err);
@@ -52,10 +66,6 @@ const tryToConnect = async () => {
       default: console.error("rpc response type invalid:", {msgObj});
     }
   };
-}
-
-const chkConn = async (retry = false) => {
-  if(socket.readyState !== WebSocket.OPEN) socketError(retry);
 }
 
 export const wsInit = () => {
@@ -68,10 +78,17 @@ let lastId = Date.now();
 const rpc = async (mod, func, args) => {
   const id = lastId++;
   const msg = {id, mod, func, args};
-  if(!socket) throw 'rpc call with no socket';
+  if(!socket || socket.readyState != WebSocket.OPEN) 
+    throw `${mod}:${func} rpc call with no open socket.`;
   return new Promise( (resolve, reject) => {
-    pending[id] = {resolve, reject};
-    socket.send(JSON.stringify(msg));
+    pendingRpcs[id] = {resolve, reject};
+    try{  
+      socket.send(JSON.stringify(msg));
+    }
+    catch(err) {
+      delete pendingRpcs[id];
+      reject(`socket.send error: ${err}`);
+    }
   });
 }
 
