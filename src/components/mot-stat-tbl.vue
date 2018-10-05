@@ -1,0 +1,54 @@
+
+<template>
+  <div id="mstatus">
+    <div id=table>
+      <header id=hdr>
+        <div id="pos">Target Position</div>
+      </header>
+      <template v-for="mot in motors">
+         <MotorStatusRow :key="mot.idx" :motIdx="mot.idx" :descr="mot.descr" :hasLimit="mot.hasLimit"/>
+      </template>
+    </div>
+  </div>
+</template>
+
+<script>
+import MotorStatusRow from './mot-stat-row.vue'
+import {getMotors}    from '../motor.js'
+import {motRpc}       from '../websocket.js'
+
+export default {
+  name: 'MotorStatusTable',
+  components: {
+    MotorStatusRow,
+  },
+  data: function(){ return {
+    motors: getMotors(),
+  }},
+}
+</script>
+
+<style lang="scss" scoped>
+  #mstatus {
+    text-align: center;
+    color: gray;
+  }
+  #table {
+    display: grid;
+    grid-template-rows: auto;
+    grid-row-gap: 5px;
+    
+    #hdr {
+      display: grid;
+      grid-template-columns:  [descr]   .5fr  [errFlag]  .2fr  [busy] .2fr 
+                              [motorOn] .2fr  [homed]    .35fr [pos]  .4fr
+                              [tgtPos]  .3fr  [home]     .3fr  [move] .25fr
+                              [stop]    .25fr [reset]    .35fr ;
+      #pos {
+        width:60px;
+        grid-column: tgtPos / span 1;
+        justify-self: left;
+      }
+    }
+  }
+</style>

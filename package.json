@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "vue": "^2.5.17",
+    "vue-modal-dialogs": "^3.0.0",
     "vue-router": "^3.0.1"
   },
   "devDependencies": {
