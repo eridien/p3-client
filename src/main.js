@@ -10,7 +10,7 @@ new Vue({
   router,
   render: h => h(App),
   mounted: async () => {
-    util.popup('hekko');
-    await wsInit();
+    // util.popup('test');
+     await wsInit();
   },
 }).$mount('#app')

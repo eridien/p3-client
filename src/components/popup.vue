@@ -28,7 +28,6 @@
       background-color: white;//#eee;
       border: 1px solid black;
       border-radius: 6px;
-      // text-align: center;
       width:300px;
       // left: 50%;
       // margin-left:-100px; // half width (above)
@@ -37,6 +36,7 @@
 
       #dialog-body{
         margin:20px;
+        text-align: left;
       }
       footer{
         color:gray;
