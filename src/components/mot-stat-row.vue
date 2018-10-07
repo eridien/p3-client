@@ -11,8 +11,9 @@
         <div class="pos" :class="{true:status.homed}">pos: {{status.pos}}</div>
       </template>
       <input class="tgtPos" v-model.number="tgtPos" placeholder="Enter">
-      <input class="speed" v-model.number="speed" placeholder="Default">
-      <input class="accel" v-model.number="accel" placeholder="Default">
+      <input class="speed"  v-model.number="speed" placeholder="Def 2000">
+      <input class="accel"  v-model.number="accel" placeholder="None">
+      <input class="clk"    @change="newclk" v-model.number="clk" placeholder="Clk Usecs">
       <button class="home"  @click="home">Home</button>
       <button class="move"  @click="move">Move</button>
       <button class="jogp"  @click="jogp">Jog+</button>
@@ -39,10 +40,11 @@
     data: function () {
       return {
         showError: false,
-        errMsg: '',
+        errMsg:   '',
         tgtPos: 1000,
         speed:  2000,
         accel:     4,
+        clk:      30,
         status: {
           name:'', errFlag:false, busy:false, motorOn:false, homed:false, pos:0,
         },
@@ -52,7 +54,10 @@
       while(!isDestroyed) {
         try { this.status = await motRpc('getStatus', this.motIdx); }
         catch(err) {
-          this.errMsg = err.message;
+          if(err.code === 'ENXIO')
+            this.errMsg = 'Unable to connect to motor controller.';
+          else
+            this.errMsg = err.message;
           this.showError = true;
         };
         await util.sleep(200);
@@ -63,6 +68,7 @@
     },
     methods: {
       home: function() {
+        this.showError = false;
         if(this.hasLimit)
           motRpc('home', this.motIdx).then(()=>{});
         else
@@ -79,20 +85,28 @@
         return accel;
       },
       move: function() {
+        this.showError = false;
         motRpc('move', this.motIdx, this.tgtPos, this.speed, this.getAccel()).then(()=>{});
       },
       jogp: function() {
+        this.showError = false;
         motRpc('jog', this.motIdx, 1, this.tgtPos).then(()=>{});
       },
       jogm: function() {
+        this.showError = false;
         motRpc('jog', this.motIdx, 0, this.tgtPos).then(()=>{});
       },
       stop: function() {
+        this.showError = false;
         motRpc('stop', this.motIdx).then(()=>{});
       },
       reset: function() {
         this.showError = false;
         motRpc('reset', this.motIdx).then(()=>{});
+      },
+      newclk: function() {
+        this.clk
+        motRpc('sendSettings', this.motIdx, {clkPeriod:this.clk}).then(()=>{});
       },
     }
   }
@@ -105,7 +119,7 @@
       grid-template-columns: [descr]   .5fr  [errFlag]  .2fr  [busy] .2fr 
                              [motorOn] .2fr  [homed]    .35fr [pos]  .4fr
                              [tgtPos]  .25fr [speed]    .25fr [accel]  .25fr  
-                             [home]    .3fr  [move]     .25fr
+                             [clk]     .25fr  [home]    .3fr  [move]     .25fr
                              [jogp]    .25fr [jogm]     .25fr  [stop] .25fr 
                              [reset]  .35fr ;
     grid-column-gap: 5px;
@@ -139,6 +153,11 @@
     .accel { 
       width:45px;
       grid-column: accel ;
+      justify-self: left;
+    }
+    .clk { 
+      width:25px;
+      grid-column: clk ;
       justify-self: left;
     }
     .home {

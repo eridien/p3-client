@@ -8,7 +8,7 @@ let socket, monConn;
 
 const socketError = (retry = false) => {
   const wstate = (socket ? wsToStr(socket.readyState) : 'not open');
-  console.log('socketError', {retry, wstate});
+  if(!retry) console.log('socketError', {retry, wstate});
   if(monConn) clearInterval(monConn);
   for (const [, val] of Object.entries(pendingRpcs)) {
     console.log('rejecting rpc:', val.msg);
@@ -65,11 +65,8 @@ const tryToConnect = async () => {
     if(!pend) console.log("rpc id not in pending table:", {message});
     else switch(type) {
       case "res": pend.resolve(msgObj.val); break;
-      case "rej": 
-        console.error("rpc rejected:",  msgObj);
-        pend.reject (msgObj.err); break;
+      case "rej": pend.reject (msgObj.err); break;
       case "err": console.error("rpc error:", {msgObj}); break;
-      default: console.error("rpc response type invalid:", {msgObj});
     }
   };
 }

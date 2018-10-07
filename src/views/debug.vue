@@ -6,6 +6,7 @@
         <div id="pos">target</div>
         <div id="speed">speed</div>
         <div id="accel">accel</div>
+        <div id="clk">clk</div>
       </header>
       <template v-for="mot in motors">
          <MotorStatusRow :key="mot.idx" :motIdx="mot.idx" :descr="mot.descr" :hasLimit="mot.hasLimit"/>
@@ -49,7 +50,7 @@ export default {
       grid-template-columns: [descr]   .5fr  [errFlag]  .2fr  [busy] .2fr 
                              [motorOn] .2fr  [homed]    .35fr [pos]  .4fr
                              [tgtPos]  .25fr [speed]    .25fr [accel]  .25fr  
-                             [home]    .3fr  [move]     .25fr
+                             [clk]     .25fr  [home]    .3fr  [move]     .25fr
                              [jogp]    .25fr [jogm]     .25fr  [stop] .25fr 
                              [reset]  .35fr ;
       #pos {
@@ -64,6 +65,11 @@ export default {
       }
       #accel {
         grid-column: accel;
+        // justify-self: left;
+        font-size: 14px;
+      }
+      #clk {
+        grid-column: clk;
         // justify-self: left;
         font-size: 14px;
       }
