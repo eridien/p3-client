@@ -2,7 +2,7 @@
 import util from './my-utils.js';
 
 const wsToStr = (code) => ['connecting','open','closing','closed'][code];
-
+const pi_url = 'ws://192.168.1.151:3535';
 const pendingRpcs = {};
 let socket, monConn;
 
@@ -32,7 +32,7 @@ const chkConn = async (retry = false) => {
 }
 
 const tryToConnect = async () => {
-  socket = new WebSocket('ws://192.168.1.179:3535');
+  socket = new WebSocket(pi_url);
 
   socket.onopen = () => {
     util.closePopup();

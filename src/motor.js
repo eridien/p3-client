@@ -1,6 +1,5 @@
 
 import {motRpc}         from './websocket.js'
-import { notDeepEqual } from 'assert';
 import util             from './my-utils.js';
 
 let motors = null;
