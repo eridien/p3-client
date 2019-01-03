@@ -3,17 +3,19 @@ import util from './my-utils.js';
 
 const wsToStr = (code) => ['connecting','open','closing','closed'][code];
 const pi_url = 'ws://192.168.1.151:3535';
-const pendingRpcs = {};
+let pendingRpcs = {};
 let socket, monConn;
 
 const socketError = (retry = false) => {
   const wstate = (socket ? wsToStr(socket.readyState) : 'not open');
   if(!retry) console.log('socketError', {retry, wstate});
+  
   if(monConn) clearInterval(monConn);
   for (const [, val] of Object.entries(pendingRpcs)) {
     console.log('rejecting rpc:', val.msg);
     val.reject('rpc failed because of socket error');
   }
+  pendingRpcs = {};
   // if(socket.readyState < WebSocket.CLOSING) socket.close();
   if(!retry) { 
     util.popup(`

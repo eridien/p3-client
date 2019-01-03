@@ -9,7 +9,7 @@
         <div id="clk">clk</div>
       </header>
       <template v-for="mot in motors">
-         <MotorStatusRow :key="mot.idx" :motIdx="mot.idx" :descr="mot.descr" :hasLimit="mot.hasLimit"/>
+         <MotorStatusRow :key="mot.idx" :motIdx="mot.idx" :descr="mot.descr" :hasLimit="mot.limitSw !== 0"/>
       </template>
     </div>
     <div v-else> Loading ...</div>

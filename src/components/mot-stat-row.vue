@@ -68,10 +68,6 @@
     },
     methods: {
       home: function() {
-
-        // TESTING ONLY
-        motRpc('sendSettings', 'F', {backlashWid:160});
-
         this.showError = false;
         if(this.hasLimit)
           motRpc('home', this.motIdx).then(()=>{});
